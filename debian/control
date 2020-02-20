@@ -1,0 +1,12 @@
+Source: ros-melodic-mpc-local-planner-examples
+Section: misc
+Priority: optional
+Maintainer: Christoph Rösmann <christoph.roesmann@tu-dortmund.de>
+Build-Depends: debhelper (>= 9.0.0), ros-melodic-catkin
+Homepage: http://wiki.ros.org/mpc_local_planner_examples
+Standards-Version: 3.9.2
+
+Package: ros-melodic-mpc-local-planner-examples
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-melodic-amcl, ros-melodic-map-server, ros-melodic-move-base, ros-melodic-mpc-local-planner, ros-melodic-stage-ros
+Description: The mpc_local_planner_examples package
