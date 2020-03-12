@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>mpc_local_planner_examples</name>
-  <version>0.0.1</version>
+  <version>0.0.2</version>
   <description>The mpc_local_planner_examples package</description>
 
   <maintainer email="christoph.roesmann@tu-dortmund.de">Christoph Rösmann</maintainer>
@@ -16,6 +16,7 @@
 
   <exec_depend>stage_ros</exec_depend>
   <exec_depend>mpc_local_planner</exec_depend>
+  <exec_depend>mpc_local_planner_msgs</exec_depend>
   <exec_depend>move_base</exec_depend>
   <exec_depend>map_server</exec_depend>
   <exec_depend>amcl</exec_depend>
