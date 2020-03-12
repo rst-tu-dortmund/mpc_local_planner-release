@@ -4,11 +4,18 @@ mpc_local_planner ROS Package
 The mpc_local_planner package implements a plugin to the base_local_planner of the 2D navigation stack.
 It provides a generic and versatile model predictive control implementation with minimum-time and quadratic-form receding-horizon configurations.
 
+For custom build instructions (e.g. compilation with other third-party solvers) see [this wiki](https://github.com/rst-tu-dortmund/mpc_local_planner/wiki).
+
+Refer to http://wiki.ros.org/mpc_local_planner for more general information and tutorials.
+
+Build status:
+- ROS Melodic (*melodic-devel*): [![Melodic Status](http://build.ros.org/buildStatus/icon?job=Mdev__mpc_local_planner__ubuntu_bionic_amd64)](http://build.ros.org/job/Mdev__mpc_local_planner__ubuntu_bionic_amd64/)
+
 ## Authors
 
 * Christoph Rösmann <christoph.roesmann@tu-dortmund.de>
 
-### Citing the Software
+## Citing the Software
 
 *Since a lot of time and effort has gone into the development, please cite at least one of the following publications if you are using the software for published work.*
 
@@ -22,12 +29,11 @@ It provides a generic and versatile model predictive control implementation with
 - C. Rösmann, F. Hoffmann und T. Bertram: Timed-Elastic-Bands for Time-Optimal Point-to-Point Nonlinear Model Predictive Control, European Control Conference (ECC), Austria, July 2015.
 - C. Rösmann, F. Hoffman und T. Bertram: Convergence Analysis of Time-Optimal Model Predictive Control under Limited Computational Resources, European Control Conference (ECC), Denmark, June 2016.
 
+<a href="https://www.buymeacoffee.com/croesmann" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/guidelines/download-assets-sm-2.svg" alt="Buy Me A Coffee"></a>
 
-### License
+## License
 
-Copyright (c) 2020,
-TU Dortmund - Institute of Control Theory and Systems Engineering.
-All rights reserved.
+Copyright (c) 2020, Christoph Rösmann, All rights reserved.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -52,10 +58,8 @@ The package depends on third-party packages:
 It depends on other ROS packages, which are listed in the package.xml. They are licensed under BSD resp. Apache 2.0.
 
 
-### Requirements
+## Requirements
 
 Install dependencies (listed in the *package.xml* and *CMakeLists.txt* file) using *rosdep*:
 
     rosdep install mpc_local_planner
-
-
