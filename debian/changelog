@@ -1,0 +1,14 @@
+ros-melodic-mpc-local-planner-msgs (0.0.2-1bionic) bionic; urgency=high
+
+
+
+ -- Christoph Rösmann <christoph.roesmann@tu-dortmund.de>  Wed, 11 Mar 2020 23:00:00 -0000
+
+ros-melodic-mpc-local-planner-msgs (0.0.1-1bionic) bionic; urgency=high
+
+  * First release
+  * Contributors: Christoph Rösmann
+
+ -- Christoph Rösmann <christoph.roesmann@tu-dortmund.de>  Wed, 19 Feb 2020 23:00:00 -0000
+
+
