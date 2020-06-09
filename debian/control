@@ -1,0 +1,12 @@
+Source: ros-noetic-mpc-local-planner-examples
+Section: misc
+Priority: optional
+Maintainer: Christoph Rösmann <christoph.roesmann@tu-dortmund.de>
+Build-Depends: debhelper (>= 9.0.0), ros-noetic-catkin
+Homepage: http://wiki.ros.org/mpc_local_planner_examples
+Standards-Version: 3.9.2
+
+Package: ros-noetic-mpc-local-planner-examples
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-noetic-amcl, ros-noetic-map-server, ros-noetic-move-base, ros-noetic-mpc-local-planner, ros-noetic-mpc-local-planner-msgs, ros-noetic-stage-ros
+Description: The mpc_local_planner_examples package
