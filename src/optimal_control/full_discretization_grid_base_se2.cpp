@@ -58,6 +58,7 @@ corbo::GridUpdateResult FullDiscretizationGridBaseSE2::update(const Eigen::Vecto
     // check if we need to cache the reference trajectory values // TODO(roesmann): we could restrict this to new_run==true only as long as we do not
     // have a grid resize...
     int n = std::max(std::max(getNRef(), getN()), _n_adapt);
+    if (_dt.value() <= 0) _dt.value() = _dt_ref; // initialize _dt to _dt_ref in case it has not been optimized before
     if (!xref.isCached(getDt(), n, t)) xref.precompute(getDt(), n, t);
     if (!uref.isCached(getDt(), n, t)) uref.precompute(getDt(), n, t);
     if (sref && !sref->isCached(getDt(), n, t)) sref->precompute(getDt(), n, t);
@@ -168,7 +169,7 @@ void FullDiscretizationGridBaseSE2::initializeSequences(const Eigen::VectorXd& x
     {
         // add new state by linear interpolation
         Eigen::VectorXd new_x = x0 + (double)k * step * dir;
-        new_x[2]              = orient_init;
+        if (k > 0) new_x[2] = orient_init; // but do not overwrite start orientation
         _x_seq.emplace_back(new_x, nlp_fun.x_lb, nlp_fun.x_ub);
         // add new constant control (assume u0 to hold
         _u_seq.emplace_back(uref.getReferenceCached(k), nlp_fun.u_lb, nlp_fun.u_ub);
