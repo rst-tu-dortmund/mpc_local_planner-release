@@ -1,0 +1,26 @@
+ros-melodic-mpc-local-planner-examples (0.0.3-1bionic) bionic; urgency=high
+
+  * Added feasibility check with costmap robot model
+  * Changed obstacle parameters cutoff_factor and force_inclusion_factor to cutoff_dist and force_inclusion_dist
+  * Dynamic obstacles: the inequality constraints now use the actual time parameter rather than the time from the previous optimization
+  * Changed minimum CMake version to 3.1
+  * Contributors: Christoph Rösmann
+
+ -- Christoph Rösmann <christoph.roesmann@tu-dortmund.de>  Mon, 08 Jun 2020 22:00:00 -0000
+
+ros-melodic-mpc-local-planner-examples (0.0.2-1bionic) bionic; urgency=high
+
+  * Added dependency on mpc_local_planner_msgs package
+  * Default parameter set changed
+  * Contributors: Christoph Rösmann
+
+ -- Christoph Rösmann <christoph.roesmann@tu-dortmund.de>  Wed, 11 Mar 2020 23:00:00 -0000
+
+ros-melodic-mpc-local-planner-examples (0.0.1-1bionic) bionic; urgency=high
+
+  * First release
+  * Contributors: Christoph Rösmann
+
+ -- Christoph Rösmann <christoph.roesmann@tu-dortmund.de>  Wed, 19 Feb 2020 23:00:00 -0000
+
+
