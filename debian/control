@@ -1,0 +1,13 @@
+Source: ros-noetic-mpc-local-planner
+Section: misc
+Priority: optional
+Maintainer: Christoph Rösmann <christoph.roesmann@tu-dortmund.de>
+Build-Depends: debhelper (>= 9.0.0), libeigen3-dev, ros-noetic-base-local-planner, ros-noetic-catkin, ros-noetic-control-box-rst, ros-noetic-costmap-2d, ros-noetic-costmap-converter, ros-noetic-dynamic-reconfigure, ros-noetic-geometry-msgs, ros-noetic-interactive-markers, ros-noetic-mbf-costmap-core, ros-noetic-mbf-msgs, ros-noetic-mpc-local-planner-msgs, ros-noetic-nav-core, ros-noetic-nav-msgs, ros-noetic-pluginlib, ros-noetic-roscpp, ros-noetic-std-msgs, ros-noetic-teb-local-planner, ros-noetic-tf2, ros-noetic-tf2-eigen, ros-noetic-tf2-geometry-msgs, ros-noetic-tf2-ros, ros-noetic-visualization-msgs
+Homepage: http://wiki.ros.org/mpc_local_planner
+Standards-Version: 3.9.2
+
+Package: ros-noetic-mpc-local-planner
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, libeigen3-dev, ros-noetic-base-local-planner, ros-noetic-control-box-rst, ros-noetic-costmap-2d, ros-noetic-costmap-converter, ros-noetic-dynamic-reconfigure, ros-noetic-geometry-msgs, ros-noetic-interactive-markers, ros-noetic-mbf-costmap-core, ros-noetic-mbf-msgs, ros-noetic-mpc-local-planner-msgs, ros-noetic-nav-core, ros-noetic-nav-msgs, ros-noetic-pluginlib, ros-noetic-roscpp, ros-noetic-std-msgs, ros-noetic-teb-local-planner, ros-noetic-tf2, ros-noetic-tf2-ros, ros-noetic-visualization-msgs
+Description: The mpc_local_planner package implements a plugin to the base_local_planner of the 2D navigation stack.
+ It provides a generic and versatile model predictive control implementation with minimum-time and quadratic-form receding-horizon configurations.
