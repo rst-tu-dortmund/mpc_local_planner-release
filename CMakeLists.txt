@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.1)
 project(mpc_local_planner)
 
 # Set to Release in order to speed up the program significantly
@@ -240,7 +240,7 @@ install(PROGRAMS
 )
 
 ## Mark executables and/or libraries for installation
-install(TARGETS mpc_local_planner
+install(TARGETS mpc_local_planner mpc_local_planner_utils mpc_local_planner_optimal_control
    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
 install(TARGETS test_mpc_optim_node
