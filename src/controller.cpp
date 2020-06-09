@@ -22,6 +22,7 @@
 
 #include <mpc_local_planner/controller.h>
 
+#include <corbo-optimal-control/functions/hybrid_cost.h>
 #include <corbo-optimal-control/functions/minimum_time.h>
 #include <corbo-optimal-control/functions/quadratic_control_cost.h>
 #include <corbo-optimal-control/structured_ocp/discretization_grids/finite_differences_variable_grid.h>
@@ -36,6 +37,7 @@
 #include <mpc_local_planner/optimal_control/min_time_via_points_cost.h>
 #include <mpc_local_planner/optimal_control/quadratic_cost_se2.h>
 #include <mpc_local_planner/optimal_control/stage_inequality_se2.h>
+#include <mpc_local_planner/systems/kinematic_bicycle_model.h>
 #include <mpc_local_planner/systems/simple_car.h>
 #include <mpc_local_planner/systems/unicycle_robot.h>
 #include <mpc_local_planner/utils/time_series_se2.h>
@@ -359,6 +361,14 @@ RobotDynamicsInterface::Ptr Controller::configureRobotDynamics(const ros::NodeHa
         else
             return std::make_shared<SimpleCarModel>(wheelbase);
     }
+    else if (_robot_type == "kinematic_bicycle_vel_input")
+    {
+        double length_rear = 1.0;
+        nh.param("robot/kinematic_bicycle_vel_input/length_rear", length_rear, length_rear);
+        double length_front = 1.0;
+        nh.param("robot/kinematic_bicycle_vel_input/length_front", length_front, length_front);
+        return std::make_shared<KinematicBicycleModelVelocityInput>(length_rear, length_front);
+    }
     else
     {
         ROS_ERROR_STREAM("Unknown robot type '" << _robot_type << "' specified.");
@@ -516,6 +526,22 @@ corbo::StructuredOptimalControlProblem::Ptr Controller::configureOcp(const ros::
 
         ocp->setControlBounds(Eigen::Vector2d(-max_vel_x_backwards, -max_steering_angle), Eigen::Vector2d(max_vel_x, max_steering_angle));
     }
+    else if (_robot_type == "kinematic_bicycle_vel_input")
+    {
+        double max_vel_x = 0.4;
+        nh.param("robot/kinematic_bicycle_vel_input/max_vel_x", max_vel_x, max_vel_x);
+        double max_vel_x_backwards = 0.2;
+        nh.param("robot/kinematic_bicycle_vel_input/max_vel_x_backwards", max_vel_x_backwards, max_vel_x_backwards);
+        if (max_vel_x_backwards < 0)
+        {
+            ROS_WARN("max_vel_x_backwards must be >= 0");
+            max_vel_x_backwards *= -1;
+        }
+        double max_steering_angle = 1.5;
+        nh.param("robot/kinematic_bicycle_vel_input/max_steering_angle", max_steering_angle, max_steering_angle);
+
+        ocp->setControlBounds(Eigen::Vector2d(-max_vel_x_backwards, -max_steering_angle), Eigen::Vector2d(max_vel_x, max_steering_angle));
+    }
     else
     {
         ROS_ERROR_STREAM("Cannot configure OCP for unknown robot type " << _robot_type << ".");
@@ -566,14 +592,36 @@ corbo::StructuredOptimalControlProblem::Ptr Controller::configureOcp(const ros::
         }
         bool integral_form = false;
         nh.param("planning/objective/quadratic_form/integral_form", integral_form, integral_form);
+        bool hybrid_cost_minimum_time = false;
+        nh.param("planning/objective/quadratic_form/hybrid_cost_minimum_time", hybrid_cost_minimum_time, hybrid_cost_minimum_time);
+
         bool q_zero = Q.isZero();
         bool r_zero = R.isZero();
         if (!q_zero && !r_zero)
+        {
+            PRINT_ERROR_COND(hybrid_cost_minimum_time,
+                             "Hybrid minimum time and quadratic form cost is currently only supported for non-zero control weights only. Falling "
+                             "back to quadratic form.");
             ocp->setStageCost(std::make_shared<QuadraticFormCostSE2>(Q, R, integral_form, lsq_solver));
+        }
         else if (!q_zero && r_zero)
+        {
+            PRINT_ERROR_COND(hybrid_cost_minimum_time,
+                             "Hybrid minimum time and quadratic form cost is currently only supported for non-zero control weights only. Falling "
+                             "back to only quadratic state cost.");
             ocp->setStageCost(std::make_shared<QuadraticStateCostSE2>(Q, integral_form, lsq_solver));
+        }
         else if (q_zero && !r_zero)
-            ocp->setStageCost(std::make_shared<corbo::QuadraticControlCost>(R, integral_form, lsq_solver));
+        {
+            if (hybrid_cost_minimum_time)
+            {
+                ocp->setStageCost(std::make_shared<corbo::MinTimeQuadraticControls>(R, integral_form, lsq_solver));
+            }
+            else
+            {
+                ocp->setStageCost(std::make_shared<corbo::QuadraticControlCost>(R, integral_form, lsq_solver));
+            }
+        }
     }
     else if (objective_type == "minimum_time_via_points")
     {
@@ -674,11 +722,11 @@ corbo::StructuredOptimalControlProblem::Ptr Controller::configureOcp(const ros::
     nh.param("collision_avoidance/enable_dynamic_obstacles", enable_dynamic_obstacles, enable_dynamic_obstacles);
     _inequality_constraint->setEnableDynamicObstacles(enable_dynamic_obstacles);
 
-    double force_inclusion_factor = 1.5;
-    nh.param("collision_avoidance/force_inclusion_factor", force_inclusion_factor, force_inclusion_factor);
-    double cutoff_factor = 5;
-    nh.param("collision_avoidance/cutoff_factor", cutoff_factor, cutoff_factor);
-    _inequality_constraint->setObstacleFilterParameters(force_inclusion_factor, cutoff_factor);
+    double force_inclusion_dist = 0.5;
+    nh.param("collision_avoidance/force_inclusion_dist", force_inclusion_dist, force_inclusion_dist);
+    double cutoff_dist = 2;
+    nh.param("collision_avoidance/cutoff_dist", cutoff_dist, cutoff_dist);
+    _inequality_constraint->setObstacleFilterParameters(force_inclusion_dist, cutoff_dist);
 
     // configure control deviation bounds
 
@@ -716,6 +764,27 @@ corbo::StructuredOptimalControlProblem::Ptr Controller::configureOcp(const ros::
         }
         double max_steering_rate = 0.0;
         nh.param("robot/simple_car/max_steering_rate", max_steering_rate, max_steering_rate);
+
+        if (acc_lim_x <= 0) acc_lim_x = corbo::CORBO_INF_DBL;
+        if (dec_lim_x <= 0) dec_lim_x = corbo::CORBO_INF_DBL;
+        if (max_steering_rate <= 0) max_steering_rate = corbo::CORBO_INF_DBL;
+        Eigen::Vector2d ud_lb(-dec_lim_x, -max_steering_rate);
+        Eigen::Vector2d ud_ub(acc_lim_x, max_steering_rate);
+        _inequality_constraint->setControlDeviationBounds(ud_lb, ud_ub);
+    }
+    else if (_robot_type == "kinematic_bicycle_vel_input")
+    {
+        double acc_lim_x = 0.0;
+        nh.param("robot/kinematic_bicycle_vel_input/acc_lim_x", acc_lim_x, acc_lim_x);
+        double dec_lim_x = 0.0;
+        nh.param("robot/kinematic_bicycle_vel_input/dec_lim_x", dec_lim_x, dec_lim_x);
+        if (dec_lim_x < 0)
+        {
+            ROS_WARN("dec_lim_x must be >= 0");
+            dec_lim_x *= -1;
+        }
+        double max_steering_rate = 0.0;
+        nh.param("robot/kinematic_bicycle_vel_input/max_steering_rate", max_steering_rate, max_steering_rate);
 
         if (acc_lim_x <= 0) acc_lim_x = corbo::CORBO_INF_DBL;
         if (dec_lim_x <= 0) dec_lim_x = corbo::CORBO_INF_DBL;
@@ -784,6 +853,66 @@ bool Controller::generateInitialStateTrajectory(const Eigen::VectorXd& x0, const
     ts->add(tf_ref, xf);
 
     _x_seq_init.setTrajectory(ts, corbo::TimeSeries::Interpolation::Linear);
+    return true;
+}
+
+bool Controller::isPoseTrajectoryFeasible(base_local_planner::CostmapModel* costmap_model, const std::vector<geometry_msgs::Point>& footprint_spec,
+                                          double inscribed_radius, double circumscribed_radius, double min_resolution_collision_check_angular,
+                                          int look_ahead_idx)
+{
+    if (!_grid)
+    {
+        ROS_ERROR("Controller must be configured before invoking step().");
+        return false;
+    }
+    if (_grid->getN() < 2) return false;
+
+    // we currently require a full discretization grid as we want to have fast access to
+    // individual states without requiring any new simulation.
+    // Alternatively, other grids could be used in combination with method getStateAndControlTimeSeries()
+    const FullDiscretizationGridBaseSE2* fd_grid = dynamic_cast<const FullDiscretizationGridBaseSE2*>(_grid.get());
+    if (!fd_grid)
+    {
+        ROS_ERROR("isPoseTrajectoriyFeasible is currently only implemented for fd grids");
+        return true;
+    }
+
+    if (look_ahead_idx < 0 || look_ahead_idx >= _grid->getN()) look_ahead_idx = _grid->getN() - 1;
+
+    for (int i = 0; i <= look_ahead_idx; ++i)
+    {
+        if (costmap_model->footprintCost(fd_grid->getState(i)[0], fd_grid->getState(i)[1], fd_grid->getState(i)[2], footprint_spec, inscribed_radius,
+                                         circumscribed_radius) == -1)
+        {
+            return false;
+        }
+        // Checks if the distance between two poses is higher than the robot radius or the orientation diff is bigger than the specified threshold
+        // and interpolates in that case.
+        // (if obstacles are pushing two consecutive poses away, the center between two consecutive poses might coincide with the obstacle ;-)!
+        if (i < look_ahead_idx)
+        {
+            double delta_rot           = normalize_theta(fd_grid->getState(i)[i + 1] - fd_grid->getState(i)[0]);
+            Eigen::Vector2d delta_dist = fd_grid->getState(i + 1).head(2) - fd_grid->getState(i).head(2);
+            if (std::abs(delta_rot) > min_resolution_collision_check_angular || delta_dist.norm() > inscribed_radius)
+            {
+                int n_additional_samples = std::max(std::ceil(std::abs(delta_rot) / min_resolution_collision_check_angular),
+                                                    std::ceil(delta_dist.norm() / inscribed_radius)) -
+                                           1;
+
+                PoseSE2 intermediate_pose(fd_grid->getState(i)[0], fd_grid->getState(i)[1], fd_grid->getState(i)[2]);
+                for (int step = 0; step < n_additional_samples; ++step)
+                {
+                    intermediate_pose.position() = intermediate_pose.position() + delta_dist / (n_additional_samples + 1.0);
+                    intermediate_pose.theta()    = g2o::normalize_theta(intermediate_pose.theta() + delta_rot / (n_additional_samples + 1.0));
+                    if (costmap_model->footprintCost(intermediate_pose.x(), intermediate_pose.y(), intermediate_pose.theta(), footprint_spec,
+                                                     inscribed_radius, circumscribed_radius) == -1)
+                    {
+                        return false;
+                    }
+                }
+            }
+        }
+    }
     return true;
 }
 
